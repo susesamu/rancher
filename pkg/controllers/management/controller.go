@@ -7,6 +7,7 @@ import (
 	"github.com/rancher/rancher/pkg/controllers/management/agentupgrade"
 	"github.com/rancher/rancher/pkg/controllers/management/auth"
 	"github.com/rancher/rancher/pkg/controllers/management/certsexpiration"
+	"github.com/rancher/rancher/pkg/controllers/management/chartinstall"
 	"github.com/rancher/rancher/pkg/controllers/management/cloudcredential"
 	"github.com/rancher/rancher/pkg/controllers/management/cluster"
 	"github.com/rancher/rancher/pkg/controllers/management/clusterdeploy"
@@ -48,6 +49,9 @@ func Register(ctx context.Context, management *config.ManagementContext, manager
 	secretmigrator.Register(ctx, management)
 	settings.Register(ctx, management)
 	managementlegacy.Register(ctx, management, manager)
+
+	//TODO(susesamu): management seems to have wrangler, check the method signature later
+	chartinstall.Register(ctx, management, wrangler)
 
 	// Register last
 	auth.RegisterLate(ctx, management)
