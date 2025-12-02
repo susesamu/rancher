@@ -1,10 +1,13 @@
 package chartinstall
 
 import (
+	"reflect"
+
 	fleet "github.com/rancher/fleet/pkg/apis/fleet.cattle.io/v1alpha1"
 	"github.com/rancher/lasso/pkg/dynamic"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type Injector struct {
@@ -28,17 +31,17 @@ func (i *Injector) Reconcile(bundle *fleet.Bundle) (bool, error) {
 
 	// Lookup dynamic ChartRequirement
 	req, err := i.findChartRequirement(chartName, version)
-	if err != nil {
+	if err != nil || req == nil {
 		return false, err
-	}
-	if req == nil {
-		return false, nil
 	}
 
 	userValues := toMap(bundle.Spec.Helm.Values)
 	mandatory := extractRequiredValues(req)
-
 	merged := deepMerge(userValues, mandatory)
+
+	if reflect.DeepEqual(userValues, merged) {
+		return false, nil
+	}
 
 	bundle.Spec.Helm.Values = toGenericMap(merged)
 	return true, nil
@@ -51,7 +54,8 @@ func (i *Injector) findChartRequirement(chart, version string) (*unstructured.Un
 		"charts.rancher.io/version": version,
 	}.AsSelector()
 
-	// namespace = "" should list across all namespaces
+	// namespace = "" list across all namespaces
+	//this can be a future problem if the same charts exists in different namespaces or different versions
 	objs, err := i.dynamic.List(chartRequirementGVK, "", selector)
 	if err != nil {
 		return nil, err
@@ -60,16 +64,20 @@ func (i *Injector) findChartRequirement(chart, version string) (*unstructured.Un
 	if len(objs) == 0 {
 		return nil, nil
 	}
-	u, ok := objs[0].(*unstructured.Unstructured)
-	if !ok {
-		return nil, nil // or return fmt.Errorf("unexpected type: %T", objs[0])
+	u := &unstructured.Unstructured{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(objs[0].(*unstructured.Unstructured).Object, u); err != nil {
+		return nil, err
 	}
 
 	return u, nil
 }
 
 func extractRequiredValues(req *unstructured.Unstructured) map[string]interface{} {
-	v, _, _ := unstructured.NestedMap(req.Object, "spec", "requiredValues")
+	v, _, err := unstructured.NestedMap(req.Object, "spec", "requiredValues")
+	if err != nil {
+		//TODO(susesamu): it would be good to log something here
+		//log.Warnf(...)
+	}
 	if v == nil {
 		return map[string]interface{}{}
 	}

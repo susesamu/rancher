@@ -23,13 +23,14 @@ func (h *AppHandler) OnChange(key string, app *fleet.Bundle) (*fleet.Bundle, err
 		return nil, nil
 	}
 
+	app = app.DeepCopy()
 	modified, err := h.injector.Reconcile(app)
 	if err != nil {
 		return nil, err
 	}
 
-	// If no modification, return original
-	if !modified {
+	// this is doing nothing, it's just to debug/be explicit, I may remove later
+	if modified {
 		return app, nil
 	}
 

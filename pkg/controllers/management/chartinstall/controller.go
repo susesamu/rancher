@@ -15,7 +15,7 @@ var chartRequirementGVK = schema.GroupVersionKind{
 }
 
 func Register(ctx context.Context, mgmt *config.ManagementContext, wctx *wrangler.Context) {
-	wctx.OnLeaderOrDie("chart-install-controller", func(ctx context.Context) error {
+	wctx.OnLeaderOrDie("chart-install-register", func(ctx context.Context) error {
 
 		bundleController := wctx.Fleet.Bundle()
 		bundleCache := bundleController.Cache()
