@@ -17,11 +17,15 @@ func NewAppHandler(apps fleetcontrollers.BundleCache, injector *Injector) *AppHa
 	}
 }
 
-// THIS is the correct method
 func (h *AppHandler) OnChange(key string, app *fleet.Bundle) (*fleet.Bundle, error) {
 	if app == nil {
 		return nil, nil
 	}
+
+	//Need to check this if its a secret change
+	// if secret.Type == "helm.sh/release.v1" {
+	// 	// decode chart name + values from secret.Data["release"]
+	// }
 
 	app = app.DeepCopy()
 	modified, err := h.injector.Reconcile(app)
