@@ -72,27 +72,27 @@ func (i *Injector) findChartRequirement(chart, version string) (*unstructured.Un
 	return u, nil
 }
 
-func extractRequiredValues(req *unstructured.Unstructured) map[string]interface{} {
+func extractRequiredValues(req *unstructured.Unstructured) map[string]any {
 	v, _, err := unstructured.NestedMap(req.Object, "spec", "requiredValues")
 	if err != nil {
 		//TODO(susesamu): it would be good to log something here
 		//log.Warnf(...)
 	}
 	if v == nil {
-		return map[string]interface{}{}
+		return map[string]any{}
 	}
 	return v
 }
 
 // Minimal deep merge with mandatory override
-func deepMerge(user map[string]interface{}, mandatory map[string]interface{}) map[string]interface{} {
-	out := map[string]interface{}{}
+func deepMerge(user map[string]any, mandatory map[string]any) map[string]any {
+	out := map[string]any{}
 	for k, v := range user {
 		out[k] = v
 	}
 	for k, mv := range mandatory {
-		if mvMap, ok := mv.(map[string]interface{}); ok {
-			if uvMap, ok2 := out[k].(map[string]interface{}); ok2 {
+		if mvMap, ok := mv.(map[string]any); ok {
+			if uvMap, ok2 := out[k].(map[string]any); ok2 {
 				out[k] = deepMerge(uvMap, mvMap)
 				continue
 			}
@@ -102,16 +102,16 @@ func deepMerge(user map[string]interface{}, mandatory map[string]interface{}) ma
 	return out
 }
 
-func toMap(gm *fleet.GenericMap) map[string]interface{} {
+func toMap(gm *fleet.GenericMap) map[string]any {
 	if gm == nil || gm.Data == nil {
-		return map[string]interface{}{}
+		return map[string]any{}
 	}
 	return gm.Data
 }
 
-func toGenericMap(m map[string]interface{}) *fleet.GenericMap {
+func toGenericMap(m map[string]any) *fleet.GenericMap {
 	if m == nil {
-		return &fleet.GenericMap{Data: map[string]interface{}{}}
+		return &fleet.GenericMap{Data: map[string]any{}}
 	}
 	return &fleet.GenericMap{Data: m}
 }
